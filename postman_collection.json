@@ -1,0 +1,512 @@
+{
+  "info": {
+    "name": "UaiKiFome API",
+    "description": "Coleção de endpoints do backend REST do UaiKiFome — Sprint 2 (JWT)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restaurantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "description": "Verifica se o servidor está no ar"
+      },
+      "response": [
+        {
+          "name": "OK",
+          "status": "OK",
+          "code": 200,
+          "body": "{\"status\":\"ok\",\"service\":\"uaikifome-backend\"}"
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar usuário",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Zé do Lanche\",\n  \"email\": \"ze@lanche.com\",\n  \"password\": \"senha123\",\n  \"role\": \"restaurant\"\n}"
+            },
+            "description": "Cria uma conta. Role pode ser: restaurant, client ou delivery. Retorna o usuário sem o campo password."
+          },
+          "response": [
+            {
+              "name": "Usuário criado",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"uuid-do-user\",\n  \"name\": \"Zé do Lanche\",\n  \"email\": \"ze@lanche.com\",\n  \"role\": \"restaurant\",\n  \"createdAt\": \"2026-05-11T00:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Campos obrigatórios ausentes",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"name, email, password e role são obrigatórios\"\n}"
+            },
+            {
+              "name": "Email já cadastrado",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Email já cadastrado\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ze@lanche.com\",\n  \"password\": \"senha123\"\n}"
+            },
+            "description": "Autentica e retorna o token JWT. O token é salvo automaticamente na variável {{token}}."
+          },
+          "response": [
+            {
+              "name": "Login bem-sucedido",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n  \"user\": {\n    \"id\": \"uuid-do-user\",\n    \"name\": \"Zé do Lanche\",\n    \"email\": \"ze@lanche.com\",\n    \"role\": \"restaurant\"\n  }\n}"
+            },
+            {
+              "name": "Credenciais inválidas",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Credenciais inválidas\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Restaurantes",
+      "item": [
+        {
+          "name": "Criar restaurante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('restaurantId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/restaurants",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lanchonete do Zé\",\n  \"description\": \"Os melhores lanches de BH\",\n  \"address\": \"Rua das Flores, 123, Belo Horizonte\"\n}"
+            },
+            "description": "Cadastra um restaurante. O userId vem do token JWT (role: restaurant)."
+          },
+          "response": [
+            {
+              "name": "Criado com sucesso",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"uuid-do-restaurante\",\n  \"name\": \"Lanchonete do Zé\",\n  \"description\": \"Os melhores lanches de BH\",\n  \"address\": \"Rua das Flores, 123, Belo Horizonte\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Campos obrigatórios ausentes",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"name e address são obrigatórios\"\n}"
+            },
+            {
+              "name": "Usuário já tem restaurante",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Usuário já possui um restaurante cadastrado\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Adicionar item ao cardápio",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/restaurants/{{restaurantId}}/menu",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"X-Burgão\",\n  \"description\": \"Hambúrguer artesanal com cheddar\",\n  \"price\": 22.90\n}"
+            },
+            "description": "Adiciona um item ao cardápio. Apenas o dono do restaurante (role: restaurant) pode usar esta rota."
+          },
+          "response": [
+            {
+              "name": "Item criado",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"uuid-do-item\",\n  \"restaurantId\": \"uuid-do-restaurante\",\n  \"name\": \"X-Burgão\",\n  \"description\": \"Hambúrguer artesanal com cheddar\",\n  \"price\": \"22.90\",\n  \"available\": true\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Role inválida",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Apenas usuários com role 'restaurant' podem adicionar itens ao cardápio\"\n}"
+            },
+            {
+              "name": "Não é dono do restaurante",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Você não é o dono deste restaurante\"\n}"
+            },
+            {
+              "name": "Campos obrigatórios ausentes",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"name e price são obrigatórios\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar cardápio do restaurante",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/restaurants/{{restaurantId}}/menu",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Retorna todos os itens disponíveis do cardápio do restaurante"
+          },
+          "response": [
+            {
+              "name": "Cardápio retornado",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"uuid-do-item\",\n    \"restaurantId\": \"uuid-do-restaurante\",\n    \"name\": \"X-Burgão\",\n    \"description\": \"Hambúrguer artesanal com cheddar\",\n    \"price\": \"22.90\",\n    \"available\": true\n  }\n]"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Restaurante não encontrado",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"error\": \"Restaurante não encontrado\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "Criar pedido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('orderId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orders",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": \"{{restaurantId}}\",\n  \"deliveryAddress\": \"Av. Afonso Pena, 1500, BH\",\n  \"items\": [\n    {\n      \"menuItemId\": \"uuid-do-item\",\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "description": "Cria um pedido. O clientId vem do token JWT (role: client). O total é calculado automaticamente."
+          },
+          "response": [
+            {
+              "name": "Pedido criado",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"clientId\": \"uuid-do-client\",\n  \"restaurantId\": \"uuid-do-restaurante\",\n  \"status\": \"CRIADO\",\n  \"total\": \"45.80\",\n  \"deliveryAddress\": \"Av. Afonso Pena, 1500, BH\",\n  \"items\": [],\n  \"createdAt\": \"2026-05-11T00:00:00.000Z\",\n  \"updatedAt\": \"2026-05-11T00:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Item não encontrado",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Item uuid-do-item não encontrado ou indisponível\"\n}"
+            },
+            {
+              "name": "Pedido sem itens",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"O pedido deve ter ao menos um item\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Buscar pedido por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/{{orderId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Retorna um pedido com seus itens"
+          },
+          "response": [
+            {
+              "name": "Pedido encontrado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"status\": \"CRIADO\",\n  \"total\": \"45.80\",\n  \"items\": []\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Pedido não encontrado",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"error\": \"Pedido não encontrado\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/orders?restaurantId={{restaurantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [
+                { "key": "restaurantId", "value": "{{restaurantId}}", "description": "Filtrar por restaurante" },
+                { "key": "clientId", "value": "", "disabled": true, "description": "Filtrar por cliente" },
+                { "key": "status", "value": "", "disabled": true, "description": "Filtrar por status: CRIADO | ACEITO | ENTREGADOR_DESIGNADO | EM_ENTREGA | ENTREGUE" }
+              ]
+            },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Lista pedidos com filtros opcionais por restaurantId, clientId e status"
+          },
+          "response": [
+            {
+              "name": "Lista retornada",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"uuid-do-pedido\",\n    \"status\": \"CRIADO\",\n    \"total\": \"45.80\"\n  }\n]"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar status do pedido — ACEITO",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACEITO\"\n}"
+            },
+            "description": "Restaurante aceita o pedido. Transição: CRIADO → ACEITO. Role: restaurant."
+          },
+          "response": [
+            {
+              "name": "Status atualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"status\": \"ACEITO\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Transição inválida",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "body": "{\n  \"error\": \"Transição inválida: ENTREGUE → ACEITO\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar status do pedido — ENTREGADOR_DESIGNADO",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ENTREGADOR_DESIGNADO\"\n}"
+            },
+            "description": "Entregador aceita a entrega. O deliveryPersonId vem do token JWT. Transição: ACEITO → ENTREGADOR_DESIGNADO. Role: delivery."
+          },
+          "response": [
+            {
+              "name": "Status atualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"status\": \"ENTREGADOR_DESIGNADO\",\n  \"deliveryPersonId\": \"uuid-do-entregador\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar status do pedido — EM_ENTREGA",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EM_ENTREGA\"\n}"
+            },
+            "description": "Entregador inicia a entrega. Transição: ENTREGADOR_DESIGNADO → EM_ENTREGA. Role: delivery."
+          },
+          "response": [
+            {
+              "name": "Status atualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"status\": \"EM_ENTREGA\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar status do pedido — ENTREGUE",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ENTREGUE\"\n}"
+            },
+            "description": "Entregador confirma a entrega. Transição: EM_ENTREGA → ENTREGUE. Role: delivery."
+          },
+          "response": [
+            {
+              "name": "Status atualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-pedido\",\n  \"status\": \"ENTREGUE\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
