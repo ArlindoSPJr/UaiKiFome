@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import express from "express";
 import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
 import restaurantRoutes from "./routes/restaurant.routes";
 import orderRoutes from "./routes/order.routes";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -14,6 +15,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
 app.use("/restaurants", restaurantRoutes);
 app.use("/orders", orderRoutes);
 

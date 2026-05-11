@@ -121,6 +121,84 @@
       ]
     },
     {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "Atualizar meus dados",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Novo Nome\",\n  \"email\": \"novo@email.com\",\n  \"currentPassword\": \"senha123\",\n  \"newPassword\": \"novaSenha456\"\n}"
+            },
+            "description": "Atualiza nome, email e/ou senha do usuário autenticado. Ao menos um campo é obrigatório. Para trocar a senha, currentPassword é obrigatório."
+          },
+          "response": [
+            {
+              "name": "Atualizado com sucesso",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-do-user\",\n  \"name\": \"Novo Nome\",\n  \"email\": \"novo@email.com\",\n  \"role\": \"restaurant\",\n  \"createdAt\": \"2026-05-11T00:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            },
+            {
+              "name": "Nenhum campo informado",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Informe ao menos um campo para atualizar: name, email ou newPassword\"\n}"
+            },
+            {
+              "name": "Email já em uso",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Email já está em uso\"\n}"
+            },
+            {
+              "name": "Senha atual incorreta",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Senha atual incorreta\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deletar minha conta",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/users/me",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Deleta a conta do usuário autenticado. Retorna 204 sem corpo."
+          },
+          "response": [
+            {
+              "name": "Deletado com sucesso",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Restaurantes",
       "item": [
         {
