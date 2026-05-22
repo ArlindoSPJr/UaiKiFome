@@ -4,6 +4,7 @@ import { MenuItem } from "../entities/MenuItem";
 import { OrderItem } from "../entities/OrderItem";
 import { UserRole } from "../entities/User";
 import { OrderRepository } from "../repositories/OrderRepository";
+import { publishOrderCreated, publishOrderAccepted } from "../events/publishers/OrderPublisher";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -60,7 +61,13 @@ export class OrderService {
       items: orderItems,
     });
 
-    return OrderRepository.save(order);
+    const saved = await OrderRepository.save(order);
+
+    publishOrderCreated(saved.id, saved.restaurantId, saved.clientId).catch((err) =>
+      console.error("[publisher] Erro ao publicar order.created:", err)
+    );
+
+    return saved;
   }
 
   async findById(id: string): Promise<Order> {
@@ -106,6 +113,14 @@ export class OrderService {
     }
 
     order.status = newStatus;
-    return OrderRepository.save(order);
+    const saved = await OrderRepository.save(order);
+
+    if (newStatus === OrderStatus.ACEITO) {
+      publishOrderAccepted(saved.id, saved.clientId).catch((err) =>
+        console.error("[publisher] Erro ao publicar order.accepted:", err)
+      );
+    }
+
+    return saved;
   }
 }

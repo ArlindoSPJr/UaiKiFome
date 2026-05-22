@@ -6,6 +6,7 @@ import { Restaurant } from "../entities/Restaurant";
 import { MenuItem } from "../entities/MenuItem";
 import { Order } from "../entities/Order";
 import { OrderItem } from "../entities/OrderItem";
+import { Notification } from "../entities/Notification";
 
 dotenv.config();
 
@@ -18,6 +19,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || "uaikifome",
   synchronize: true,
   logging: false,
-  entities: [User, Restaurant, MenuItem, Order, OrderItem],
+  entities: [User, Restaurant, MenuItem, Order, OrderItem, Notification],
   migrations: [],
 });
