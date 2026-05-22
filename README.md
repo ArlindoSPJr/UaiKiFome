@@ -58,6 +58,7 @@ Importe `postman_collection.json` no Postman para ter todos os endpoints prontos
 
 ---
 
+<<<<<<< HEAD
 ## Endpoints
 
 | Método | Rota | Auth | Descrição |
@@ -82,6 +83,8 @@ CRIADO → ACEITO (restaurant) → ENTREGADOR_DESIGNADO (delivery) → EM_ENTREG
 
 ---
 
+=======
+>>>>>>> b492e4c7ef41acbd40a05a66e4745746d858e652
 ## Scripts
 
 ```bash
