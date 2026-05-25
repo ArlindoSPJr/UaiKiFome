@@ -74,3 +74,19 @@ A conexão com o RabbitMQ é gerenciada como singleton (`getRabbitMQChannel`) co
 **RabbitMQ não disponível na inicialização:** o backend inicializava antes do container RabbitMQ estar pronto, causando erro de handshake. Resolvido com lógica de retry na função `getRabbitMQChannel`.
 
 **userId vs restaurantId:** o payload do evento `order.created` carrega o `restaurantId` (ID da entidade `Restaurant`), não o ID do usuário dono. O consumer precisou buscar a entidade `Restaurant` para obter o `userId` correto antes de persistir a notificação.
+
+---
+
+## 3. Comprovação de Funcionamento
+
+### Consumo de mensagens nos workers
+
+O log do servidor abaixo comprova que, ao subir a aplicação (`npm run dev`), a conexão com o banco e com o RabbitMQ é estabelecida, os workers são iniciados e as mensagens são processadas. Para o pedido `412957cd-bd84-453b-81e4-e1c28a0c7557`, observa-se o evento `order.created` sendo consumido e, em seguida, o evento `order.accepted` processado tanto pela fila de entregadores (`delivery`) quanto pela fila do cliente (`client`):
+
+![Log de consumo das mensagens nos workers](LogConsume.png)
+
+### Painel de gerenciamento do RabbitMQ
+
+O Management UI do RabbitMQ confirma a infraestrutura de integração ativa: **1 exchanges** (`uaikifome`), **3 filas** (`restaurant_notifications`, `client_notifications`, `delivery_notifications`) e **3 consumidores** registrados, correspondentes aos workers da aplicação. O gráfico de *Message rates* registra a publicação e entrega das mensagens, e a métrica *Queued messages* zerada após o processamento comprova que as mensagens foram consumidas e confirmadas (ack) com sucesso:
+
+![Painel de gerenciamento do RabbitMQ com filas e consumidores ativos](OrderAccepted.png)
