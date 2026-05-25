@@ -585,6 +585,42 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Notificações",
+      "item": [
+        {
+          "name": "Listar minhas notificações",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Retorna todas as notificações do usuário autenticado, ordenadas por data de criação (mais recentes primeiro). Notificações são geradas automaticamente pelo RabbitMQ consumer quando eventos de pedido são processados."
+          },
+          "response": [
+            {
+              "name": "Notificações retornadas (restaurante)",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"uuid-da-notificacao\",\n    \"userId\": \"uuid-do-restaurante-owner\",\n    \"type\": \"order.created\",\n    \"message\": \"Novo pedido recebido\",\n    \"orderId\": \"uuid-do-pedido\",\n    \"read\": false,\n    \"createdAt\": \"2026-05-21T18:00:00.000Z\"\n  }\n]"
+            },
+            {
+              "name": "Notificações retornadas (cliente)",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"uuid-da-notificacao\",\n    \"userId\": \"uuid-do-cliente\",\n    \"type\": \"order.accepted\",\n    \"message\": \"Seu pedido foi aceito pelo restaurante\",\n    \"orderId\": \"uuid-do-pedido\",\n    \"read\": false,\n    \"createdAt\": \"2026-05-21T18:01:00.000Z\"\n  }\n]"
+            },
+            {
+              "name": "Sem token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Token não fornecido\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
