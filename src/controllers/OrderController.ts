@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { OrderService } from "../services/OrderService";
 import { OrderStatus } from "../entities/Order";
+import { UserRole } from "../entities/User";
 
 const service = new OrderService();
 
@@ -31,9 +32,12 @@ export class OrderController {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { restaurantId, clientId, status } = req.query;
+      // Cliente só vê os próprios pedidos: id vem do token, não da query.
+      const effectiveClientId =
+        req.user!.role === UserRole.CLIENT ? req.user!.id : (clientId as string | undefined);
       const orders = await service.list({
         restaurantId: restaurantId as string | undefined,
-        clientId: clientId as string | undefined,
+        clientId: effectiveClientId,
         status: status as OrderStatus | undefined,
       });
       res.json(orders);

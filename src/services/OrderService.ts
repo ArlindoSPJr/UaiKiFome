@@ -4,7 +4,13 @@ import { MenuItem } from "../entities/MenuItem";
 import { OrderItem } from "../entities/OrderItem";
 import { UserRole } from "../entities/User";
 import { OrderRepository } from "../repositories/OrderRepository";
-import { publishOrderCreated, publishOrderAccepted } from "../events/publishers/OrderPublisher";
+import {
+  publishOrderCreated,
+  publishOrderAccepted,
+  publishOrderDeliveryAssigned,
+  publishOrderInDelivery,
+  publishOrderDelivered,
+} from "../events/publishers/OrderPublisher";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -115,10 +121,19 @@ export class OrderService {
     order.status = newStatus;
     const saved = await OrderRepository.save(order);
 
+    const logErr = (event: string) => (err: unknown) =>
+      console.error(`[producer] Erro ao publicar ${event} (pedido ${saved.id}):`, err);
+
     if (newStatus === OrderStatus.ACEITO) {
-      publishOrderAccepted(saved.id, saved.clientId).catch((err) =>
-        console.error("[publisher] Erro ao publicar order.accepted:", err)
+      publishOrderAccepted(saved.id, saved.clientId).catch(logErr("order.accepted"));
+    } else if (newStatus === OrderStatus.ENTREGADOR_DESIGNADO) {
+      publishOrderDeliveryAssigned(saved.id, saved.clientId, saved.restaurantId).catch(
+        logErr("order.delivery_assigned")
       );
+    } else if (newStatus === OrderStatus.EM_ENTREGA) {
+      publishOrderInDelivery(saved.id, saved.clientId).catch(logErr("order.in_delivery"));
+    } else if (newStatus === OrderStatus.ENTREGUE) {
+      publishOrderDelivered(saved.id, saved.clientId, saved.restaurantId).catch(logErr("order.delivered"));
     }
 
     return saved;

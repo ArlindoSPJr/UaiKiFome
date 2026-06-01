@@ -10,6 +10,9 @@ const QUEUES = {
 export const ROUTING_KEYS = {
   orderCreated: "order.created",
   orderAccepted: "order.accepted",
+  orderDeliveryAssigned: "order.delivery_assigned",
+  orderInDelivery: "order.in_delivery",
+  orderDelivered: "order.delivered",
 };
 
 let channel: Channel | null = null;
@@ -44,8 +47,22 @@ export async function getRabbitMQChannel(): Promise<Channel> {
   await ch.bindQueue(QUEUES.client, EXCHANGE, ROUTING_KEYS.orderAccepted);
   await ch.bindQueue(QUEUES.delivery, EXCHANGE, ROUTING_KEYS.orderAccepted);
 
+  // restaurante: também é notificado quando o entregador aceita e quando o pedido é entregue
+  await ch.bindQueue(QUEUES.restaurant, EXCHANGE, ROUTING_KEYS.orderDeliveryAssigned);
+  await ch.bindQueue(QUEUES.restaurant, EXCHANGE, ROUTING_KEYS.orderDelivered);
+  // cliente: acompanha designação do entregador, saída para entrega e entrega final
+  await ch.bindQueue(QUEUES.client, EXCHANGE, ROUTING_KEYS.orderDeliveryAssigned);
+  await ch.bindQueue(QUEUES.client, EXCHANGE, ROUTING_KEYS.orderInDelivery);
+  await ch.bindQueue(QUEUES.client, EXCHANGE, ROUTING_KEYS.orderDelivered);
+
   channel = ch;
   console.log("RabbitMQ conectado — exchange 'uaikifome' configurado");
+  console.log(
+    "[rabbitmq] Bindings registrados:\n" +
+      `  • ${QUEUES.restaurant} ← [${ROUTING_KEYS.orderCreated}, ${ROUTING_KEYS.orderDeliveryAssigned}, ${ROUTING_KEYS.orderDelivered}]\n` +
+      `  • ${QUEUES.client} ← [${ROUTING_KEYS.orderAccepted}, ${ROUTING_KEYS.orderDeliveryAssigned}, ${ROUTING_KEYS.orderInDelivery}, ${ROUTING_KEYS.orderDelivered}]\n` +
+      `  • ${QUEUES.delivery} ← [${ROUTING_KEYS.orderAccepted}]`
+  );
   return channel;
 }
 

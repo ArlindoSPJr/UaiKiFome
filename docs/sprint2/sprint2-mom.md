@@ -1,6 +1,9 @@
 # Sprint 2 — Integração com Middleware Orientado a Mensagens
 
-## 1. Documentação dos Eventos
+## 1. Vídeo de demonstração dos eventos de order.created e order.accepted
+https://youtu.be/fp4ePh544T8
+
+## 2. Documentação dos Eventos
 
 | Campo | `order.created` | `order.accepted` |
 |---|---|---|
