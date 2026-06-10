@@ -4,6 +4,15 @@ import { RestaurantService } from "../services/RestaurantService";
 const service = new RestaurantService();
 
 export class RestaurantController {
+  async list(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const restaurants = await service.list();
+      res.json(restaurants);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { name, description, address } = req.body;

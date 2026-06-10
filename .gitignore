@@ -6,3 +6,11 @@ dist/
 CLAUDE.md
 docs/superpowers/
 enunciado.md
+
+# Design prototypes
+uaikifome/
+
+# Flutter desktop platforms (not targeted)
+flutter_app/windows/
+flutter_app/linux/
+flutter_app/macos/

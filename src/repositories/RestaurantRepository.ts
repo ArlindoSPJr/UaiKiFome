@@ -12,4 +12,8 @@ export const RestaurantRepository = AppDataSource.getRepository(Restaurant).exte
       where: { restaurantId: id, available: true },
     });
   },
+
+  findAll() {
+    return this.find({ order: { name: "ASC" } });
+  },
 });
