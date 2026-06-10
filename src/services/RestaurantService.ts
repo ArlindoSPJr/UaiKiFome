@@ -52,6 +52,10 @@ export class RestaurantService {
     return RestaurantRepository.findWithMenu(restaurantId);
   }
 
+  async list(): Promise<Restaurant[]> {
+    return RestaurantRepository.findAll();
+  }
+
   async addMenuItem(data: CreateMenuItemDTO): Promise<MenuItem> {
     if (data.role !== UserRole.RESTAURANT) {
       throw { status: 403, message: "Apenas usuários com role 'restaurant' podem adicionar itens ao cardápio" };

@@ -4,6 +4,7 @@ import { MenuItem } from "../entities/MenuItem";
 import { OrderItem } from "../entities/OrderItem";
 import { UserRole } from "../entities/User";
 import { OrderRepository } from "../repositories/OrderRepository";
+import { RestaurantRepository } from "../repositories/RestaurantRepository";
 import {
   publishOrderCreated,
   publishOrderAccepted,
@@ -11,6 +12,7 @@ import {
   publishOrderInDelivery,
   publishOrderDelivered,
 } from "../events/publishers/OrderPublisher";
+import { notifyUser } from "../websocket/wsServer";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -135,6 +137,25 @@ export class OrderService {
     } else if (newStatus === OrderStatus.ENTREGUE) {
       publishOrderDelivered(saved.id, saved.clientId, saved.restaurantId).catch(logErr("order.delivered"));
     }
+
+    const wsPayload = {
+      event: "order_status_updated",
+      orderId: saved.id,
+      status: saved.status,
+      updatedAt: saved.updatedAt,
+    };
+
+    notifyUser(saved.clientId, wsPayload);
+
+    RestaurantRepository.findOne({ where: { id: saved.restaurantId } })
+      .then((restaurant) => {
+        if (restaurant && restaurant.userId) {
+          notifyUser(restaurant.userId, wsPayload);
+        }
+      })
+      .catch((err) => {
+        console.error(`[wsServer] Erro ao buscar restaurante para notificação WS (pedido ${saved.id}):`, err);
+      });
 
     return saved;
   }
