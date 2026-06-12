@@ -14,6 +14,13 @@ enum OrderStatus {
     EM_ENTREGA => 'Em entrega',
     ENTREGUE => 'Entregue',
   };
+
+  static OrderStatus? fromName(String raw) {
+    for (final s in values) {
+      if (s.name == raw) return s;
+    }
+    return null;
+  }
 }
 
 class Order {
