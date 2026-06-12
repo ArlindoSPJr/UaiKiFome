@@ -199,7 +199,7 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
                                 value: item.available,
                                 onChanged: (v) =>
                                     provider.toggleAvailability(item.id, v),
-                                activeColor: couve,
+                                activeThumbColor: couve,
                               ),
                             ],
                           ),

@@ -121,7 +121,7 @@ class _RestauranteOrdersScreenState extends State<RestauranteOrdersScreen> {
           Container(width: 4, height: 16, color: color, margin: const EdgeInsets.only(right: 8)),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: textDark,
