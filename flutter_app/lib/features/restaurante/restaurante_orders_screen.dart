@@ -29,7 +29,8 @@ class _RestauranteOrdersScreenState extends State<RestauranteOrdersScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RestauranteProvider>().fetchOrders();
+      final provider = context.read<RestauranteProvider>();
+      if (provider.orders.isEmpty) provider.fetchOrders();
     });
   }
 
@@ -93,7 +94,16 @@ class _RestauranteOrdersScreenState extends State<RestauranteOrdersScreen> {
                             const SizedBox(height: 8),
                             ...pending.map((o) => _OrderCard(
                                   order: o,
-                                  onAccept: () => provider.acceptOrder(o.id),
+                                  onAccept: () async {
+                                    final ok = await provider.acceptOrder(o.id);
+                                    if (!ok && context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Erro ao aceitar pedido. Tente novamente.'),
+                                        ),
+                                      );
+                                    }
+                                  },
                                 )),
                             const SizedBox(height: 16),
                           ],

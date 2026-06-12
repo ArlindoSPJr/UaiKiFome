@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
       await auth.logout();
+      if (!mounted) return;
     }
   }
 

@@ -20,7 +20,8 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RestauranteProvider>().fetchMenu();
+      final provider = context.read<RestauranteProvider>();
+      if (provider.menuItems.isEmpty) provider.fetchMenu();
     });
   }
 

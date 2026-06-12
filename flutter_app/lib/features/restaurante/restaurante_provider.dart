@@ -49,6 +49,7 @@ class RestauranteProvider extends ChangeNotifier {
     try {
       orders = await _orderApi.listOrders(restaurantId: myRestaurant!.id);
     } catch (_) {
+      error = 'Erro ao carregar pedidos';
     } finally {
       loadingOrders = false;
       notifyListeners();
@@ -62,19 +63,23 @@ class RestauranteProvider extends ChangeNotifier {
     try {
       menuItems = await _restaurantApi.getMenu(myRestaurant!.id);
     } catch (_) {
+      error = 'Erro ao carregar cardápio';
     } finally {
       loadingMenu = false;
       notifyListeners();
     }
   }
 
-  Future<void> acceptOrder(String orderId) async {
+  Future<bool> acceptOrder(String orderId) async {
     try {
       final updated = await _orderApi.updateStatus(orderId, OrderStatus.ACEITO.name);
       final idx = orders.indexWhere((o) => o.id == orderId);
       if (idx != -1) orders[idx] = updated;
       notifyListeners();
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> addMenuItem({
