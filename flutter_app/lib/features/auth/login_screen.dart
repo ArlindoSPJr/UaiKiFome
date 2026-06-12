@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/models/user.dart';
 import '../../shared/theme/app_theme.dart';
 import 'auth_provider.dart';
 import 'signup_screen.dart';
@@ -16,6 +17,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
+  UserRole _selectedRole = UserRole.client;
+
+  static const _roleLabels = {
+    UserRole.client: 'Cliente',
+    UserRole.restaurant: 'Restaurante',
+    UserRole.delivery: 'Entregador',
+  };
+
+  static const _roleSubtitles = {
+    UserRole.client: 'Cê tá cum fome, né?',
+    UserRole.restaurant: 'Bora gerenciar seu restaurante!',
+    UserRole.delivery: 'Partiu fazer entrega!',
+  };
 
   @override
   void dispose() {
@@ -35,9 +49,19 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: urucum,
         ),
       );
+      return;
     }
-    // On success, AuthGate (Consumer<AuthProvider>) will rebuild and show the
-    // logged-in screen automatically — no explicit navigation needed here.
+    if (auth.user!.role != _selectedRole) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Esta conta não é de um ${_roleLabels[_selectedRole]!.toLowerCase()}.',
+          ),
+          backgroundColor: urucum,
+        ),
+      );
+      await auth.logout();
+    }
   }
 
   @override
@@ -54,31 +78,54 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Logo / title area
                       const SizedBox(height: 16),
                       Text(
                         'UaiKiFome',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                               color: urucum,
                               fontWeight: FontWeight.w800,
                             ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Cê tá cum fome, né?',
+                        _roleSubtitles[_selectedRole]!,
                         textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
                             ?.copyWith(color: textMuted),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 24),
 
-                      // Email field
+                      // Role tabs
+                      SegmentedButton<UserRole>(
+                        segments: const [
+                          ButtonSegment(
+                            value: UserRole.client,
+                            label: Text('Cliente'),
+                            icon: Icon(Icons.person_outline),
+                          ),
+                          ButtonSegment(
+                            value: UserRole.restaurant,
+                            label: Text('Restaurante'),
+                            icon: Icon(Icons.restaurant_outlined),
+                          ),
+                          ButtonSegment(
+                            value: UserRole.delivery,
+                            label: Text('Entregador'),
+                            icon: Icon(Icons.delivery_dining_outlined),
+                          ),
+                        ],
+                        selected: {_selectedRole},
+                        onSelectionChanged: (set) =>
+                            setState(() => _selectedRole = set.first),
+                        style: ButtonStyle(
+                          iconSize: const WidgetStatePropertyAll(16),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
                       TextFormField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -88,16 +135,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'Informe seu e-mail.';
-                          }
+                          if (v == null || v.trim().isEmpty) return 'Informe seu e-mail.';
                           if (!v.contains('@')) return 'E-mail inválido.';
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // Password field
                       TextFormField(
                         controller: _passwordCtrl,
                         obscureText: _obscurePassword,
@@ -110,20 +154,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             icon: Icon(_obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined),
-                            onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'Informe sua senha.';
-                          }
+                          if (v == null || v.isEmpty) return 'Informe sua senha.';
                           return null;
                         },
                       ),
                       const SizedBox(height: 28),
 
-                      // Entrar button
                       SizedBox(
                         height: 50,
                         child: ElevatedButton(
@@ -142,13 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Criar conta
                       TextButton(
                         onPressed: () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SignupScreen(),
-                            ),
+                            MaterialPageRoute(builder: (_) => const SignupScreen()),
                           );
                         },
                         child: const Text('Criar conta'),
