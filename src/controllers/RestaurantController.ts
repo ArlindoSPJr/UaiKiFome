@@ -13,6 +13,15 @@ export class RestaurantController {
     }
   }
 
+  async getMine(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const restaurant = await service.getMine(req.user!.id);
+      res.json(restaurant);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { name, description, address } = req.body;

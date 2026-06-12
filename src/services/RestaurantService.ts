@@ -44,6 +44,14 @@ export class RestaurantService {
     return restaurant;
   }
 
+  async getMine(userId: string): Promise<Restaurant> {
+    const restaurant = await RestaurantRepository.findByUserId(userId);
+    if (!restaurant) {
+      throw { status: 404, message: "Você ainda não possui um restaurante cadastrado" };
+    }
+    return restaurant;
+  }
+
   async getMenu(restaurantId: string): Promise<MenuItem[]> {
     const restaurant = await RestaurantRepository.findOne({ where: { id: restaurantId } });
     if (!restaurant) {
