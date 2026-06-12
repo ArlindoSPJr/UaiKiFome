@@ -5,6 +5,7 @@ import '../../core/api/restaurant_api.dart';
 import '../../core/models/menu_item.dart';
 import '../../core/models/order.dart';
 import '../../core/models/restaurant.dart';
+import '../../core/realtime/order_socket_service.dart';
 
 class RestauranteProvider extends ChangeNotifier {
   final String userId;
@@ -12,6 +13,7 @@ class RestauranteProvider extends ChangeNotifier {
 
   final _restaurantApi = RestaurantApi(createDioClient());
   final _orderApi = OrderApi(createDioClient());
+  final _socket = OrderSocketService();
 
   Restaurant? myRestaurant;
   List<MenuItem> menuItems = [];
@@ -26,6 +28,8 @@ class RestauranteProvider extends ChangeNotifier {
     if (myRestaurant != null) {
       await Future.wait([fetchOrders(), fetchMenu()]);
     }
+    _socket.onStatus = applyStatusEvent;
+    _socket.connect();
   }
 
   Future<void> fetchMyRestaurant() async {
@@ -133,5 +137,20 @@ class RestauranteProvider extends ChangeNotifier {
     } catch (_) {
       return false;
     }
+  }
+
+  void applyStatusEvent(String orderId, String rawStatus) {
+    final status = OrderStatus.fromName(rawStatus);
+    if (status == null) return;
+    final idx = orders.indexWhere((o) => o.id == orderId);
+    if (idx == -1) return;
+    orders[idx] = orders[idx].copyWith(status: status, updatedAt: DateTime.now());
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _socket.disconnect();
+    super.dispose();
   }
 }
