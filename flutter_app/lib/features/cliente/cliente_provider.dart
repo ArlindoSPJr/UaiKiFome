@@ -4,6 +4,7 @@ import '../../core/api/order_api.dart';
 import '../../core/api/restaurant_api.dart';
 import '../../core/models/order.dart';
 import '../../core/models/restaurant.dart';
+import '../../core/realtime/order_socket_service.dart';
 import 'cart_item.dart';
 
 class ClienteProvider extends ChangeNotifier {
@@ -12,6 +13,7 @@ class ClienteProvider extends ChangeNotifier {
 
   final _orderApi = OrderApi(createDioClient());
   final _restaurantApi = RestaurantApi(createDioClient());
+  final _socket = OrderSocketService();
 
   List<Restaurant> restaurants = [];
   List<Order> orders = [];
@@ -122,5 +124,22 @@ class ClienteProvider extends ChangeNotifier {
       orders[idx] = orders[idx].copyWith(status: status, updatedAt: DateTime.now());
       notifyListeners();
     }
+  }
+
+  void initRealtime() {
+    _socket.onStatus = applyStatusEvent;
+    _socket.connect();
+  }
+
+  void applyStatusEvent(String orderId, String rawStatus) {
+    final status = OrderStatus.fromName(rawStatus);
+    if (status == null) return;
+    updateOrderStatus(orderId, status);
+  }
+
+  @override
+  void dispose() {
+    _socket.disconnect();
+    super.dispose();
   }
 }
