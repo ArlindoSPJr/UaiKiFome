@@ -88,4 +88,32 @@ export class RestaurantService {
     });
     return menuItemRepo.save(item);
   }
+
+  async toggleMenuItemAvailability(data: {
+    userId: string;
+    role: UserRole;
+    restaurantId: string;
+    menuItemId: string;
+    available: boolean;
+  }): Promise<MenuItem> {
+    if (data.role !== UserRole.RESTAURANT) {
+      throw { status: 403, message: "Apenas usuários com role 'restaurant' podem alterar o cardápio" };
+    }
+    const restaurant = await RestaurantRepository.findOne({ where: { id: data.restaurantId } });
+    if (!restaurant) {
+      throw { status: 404, message: "Restaurante não encontrado" };
+    }
+    if (restaurant.userId !== data.userId) {
+      throw { status: 403, message: "Você não é o dono deste restaurante" };
+    }
+    const menuItemRepo = AppDataSource.getRepository(MenuItem);
+    const item = await menuItemRepo.findOne({
+      where: { id: data.menuItemId, restaurantId: data.restaurantId },
+    });
+    if (!item) {
+      throw { status: 404, message: "Item não encontrado" };
+    }
+    item.available = data.available;
+    return menuItemRepo.save(item);
+  }
 }
