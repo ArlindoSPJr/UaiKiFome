@@ -52,7 +52,7 @@ class _AuthGateState extends State<AuthGate> {
 
         if (auth.user!.role == UserRole.client) {
           return ChangeNotifierProvider(
-            create: (_) => ClienteProvider(clientId: auth.user!.id),
+            create: (_) => ClienteProvider(clientId: auth.user!.id)..initRealtime(),
             child: const ClienteShell(),
           );
         }
