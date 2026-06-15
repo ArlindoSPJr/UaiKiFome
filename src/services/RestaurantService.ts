@@ -61,7 +61,11 @@ export class RestaurantService {
   }
 
   async list(): Promise<Restaurant[]> {
-    return RestaurantRepository.findAll();
+    const restaurants = await RestaurantRepository.findAll();
+    for (const restaurant of restaurants) {
+      restaurant.menuItems = restaurant.menuItems.filter((item) => item.available);
+    }
+    return restaurants;
   }
 
   async addMenuItem(data: CreateMenuItemDTO): Promise<MenuItem> {

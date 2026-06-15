@@ -269,8 +269,6 @@ class _RestaurantCard extends StatelessWidget {
                       const Icon(Icons.access_time, color: textMuted, size: 14),
                       const SizedBox(width: 2),
                       const Text('30 min', style: TextStyle(fontSize: 12, color: textMuted)),
-                      const SizedBox(width: 8),
-                      const Text('R\$ 6,90', style: TextStyle(fontSize: 12, color: textMuted)),
                     ],
                   ),
                 ],

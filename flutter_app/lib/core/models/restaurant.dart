@@ -23,7 +23,7 @@ class Restaurant {
     name: json['name'] as String,
     description: json['description'] as String?,
     address: json['address'] as String,
-    items: (json['items'] as List<dynamic>?)
+    items: (json['menuItems'] as List<dynamic>?)
         ?.map((e) => MenuItem.fromJson(e as Map<String, dynamic>))
         .toList() ?? [],
   );

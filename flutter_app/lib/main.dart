@@ -27,6 +27,29 @@ class UaiKiFomeApp extends StatelessWidget {
       title: 'UaiKiFome',
       theme: buildAppTheme(),
       home: const AuthGate(),
+      // Os providers de papel ficam acima do Navigator, no `builder`, para que
+      // telas abertas via Navigator.push (em outra rota) também os encontrem.
+      builder: (context, child) {
+        return Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            if (auth.isLoggedIn && auth.user!.role == UserRole.client) {
+              return ChangeNotifierProvider(
+                create: (_) => ClienteProvider(clientId: auth.user!.id)..initRealtime(),
+                child: child!,
+              );
+            }
+
+            if (auth.isLoggedIn && auth.user!.role == UserRole.restaurant) {
+              return ChangeNotifierProvider(
+                create: (_) => RestauranteProvider(userId: auth.user!.id)..init(),
+                child: child!,
+              );
+            }
+
+            return child!;
+          },
+        );
+      },
     );
   }
 }
@@ -51,17 +74,11 @@ class _AuthGateState extends State<AuthGate> {
         if (!auth.isLoggedIn) return const LoginScreen();
 
         if (auth.user!.role == UserRole.client) {
-          return ChangeNotifierProvider(
-            create: (_) => ClienteProvider(clientId: auth.user!.id)..initRealtime(),
-            child: const ClienteShell(),
-          );
+          return const ClienteShell();
         }
 
         if (auth.user!.role == UserRole.restaurant) {
-          return ChangeNotifierProvider(
-            create: (_) => RestauranteProvider(userId: auth.user!.id)..init(),
-            child: const RestauranteShell(),
-          );
+          return const RestauranteShell();
         }
 
         return Scaffold(

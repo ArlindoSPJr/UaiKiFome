@@ -7,7 +7,6 @@ import 'cliente_provider.dart';
 import 'cliente_tracking_screen.dart';
 
 final _brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-const _deliveryFee = 6.90;
 
 class ClienteCartScreen extends StatefulWidget {
   const ClienteCartScreen({super.key});
@@ -32,7 +31,6 @@ class _ClienteCartScreenState extends State<ClienteCartScreen> {
     return Consumer<ClienteProvider>(
       builder: (context, provider, _) {
         final subtotal = provider.cartSubtotal;
-        final total = subtotal + _deliveryFee;
 
         return Scaffold(
           appBar: AppBar(
@@ -131,14 +129,10 @@ class _ClienteCartScreenState extends State<ClienteCartScreen> {
                     ),
                     const SizedBox(height: 24),
                     _SummaryRow(label: 'Subtotal', value: _brl.format(subtotal)),
-                    const SizedBox(height: 8),
-                    _SummaryRow(
-                        label: 'Taxa de entrega',
-                        value: _brl.format(_deliveryFee)),
                     const Divider(height: 24),
                     _SummaryRow(
                       label: 'Total',
-                      value: _brl.format(total),
+                      value: _brl.format(subtotal),
                       bold: true,
                     ),
                   ],
@@ -150,7 +144,7 @@ class _ClienteCartScreenState extends State<ClienteCartScreen> {
                     child: ElevatedButton(
                       onPressed: () => _checkout(context, provider),
                       child: Text(
-                        'Fazer pedido · ${_brl.format(total)}',
+                        'Fazer pedido · ${_brl.format(subtotal)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

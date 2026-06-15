@@ -11,6 +11,7 @@ import {
 import { User } from "./User";
 import { Restaurant } from "./Restaurant";
 import { OrderItem } from "./OrderItem";
+import { decimalTransformer } from "./decimalTransformer";
 
 export enum OrderStatus {
   CRIADO = "CRIADO",
@@ -61,7 +62,7 @@ export class Order {
   @Column({ type: "enum", enum: OrderStatus, default: OrderStatus.CRIADO })
   status!: OrderStatus;
 
-  @Column({ type: "decimal", precision: 10, scale: 2 })
+  @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalTransformer })
   total!: number;
 
   @Column()

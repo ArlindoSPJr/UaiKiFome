@@ -82,7 +82,6 @@ class ClienteRestaurantScreen extends StatelessWidget {
                             Text(' 4.8  ', style: TextStyle(color: Colors.white, fontSize: 12)),
                             Icon(Icons.access_time, color: Colors.white70, size: 14),
                             Text(' 30 min  ', style: TextStyle(color: Colors.white, fontSize: 12)),
-                            Text('R\$ 6,90', style: TextStyle(color: Colors.white, fontSize: 12)),
                           ],
                         ),
                       ],

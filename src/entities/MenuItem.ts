@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Restaurant } from "./Restaurant";
 import { OrderItem } from "./OrderItem";
+import { decimalTransformer } from "./decimalTransformer";
 
 @Entity("menu_items")
 export class MenuItem {
@@ -27,7 +28,7 @@ export class MenuItem {
   @Column({ nullable: true })
   description?: string;
 
-  @Column({ type: "decimal", precision: 10, scale: 2 })
+  @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalTransformer })
   price!: number;
 
   @Column({ default: true })

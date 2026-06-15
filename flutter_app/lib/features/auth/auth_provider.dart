@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api/api_client.dart';
@@ -87,6 +88,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   String _extractError(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['error'] is String) {
+        return data['error'] as String;
+      }
+      return 'Erro ao conectar. Tente novamente.';
+    }
     if (e is Exception) return e.toString().replaceFirst('Exception: ', '');
     return 'Erro ao conectar. Tente novamente.';
   }

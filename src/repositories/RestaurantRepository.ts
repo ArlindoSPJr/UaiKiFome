@@ -14,6 +14,6 @@ export const RestaurantRepository = AppDataSource.getRepository(Restaurant).exte
   },
 
   findAll() {
-    return this.find({ order: { name: "ASC" } });
+    return this.find({ order: { name: "ASC" }, relations: { menuItems: true } });
   },
 });
