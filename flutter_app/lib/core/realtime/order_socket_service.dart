@@ -1,9 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/io.dart';
 
-const String _wsBaseUrl = 'ws://localhost:3000';
+String get _wsBaseUrl {
+  if (kIsWeb) return 'ws://localhost:3000';
+  if (Platform.isAndroid) return 'ws://10.0.2.2:3000';
+  return 'ws://localhost:3000';
+}
 
 class OrderSocketService {
   void Function(String orderId, String status)? onStatus;
