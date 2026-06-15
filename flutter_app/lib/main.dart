@@ -5,14 +5,14 @@ import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/cliente/cliente_provider.dart';
 import 'features/cliente/cliente_shell.dart';
+import 'features/restaurante/restaurante_provider.dart';
+import 'features/restaurante/restaurante_shell.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
       child: const UaiKiFomeApp(),
     ),
   );
@@ -48,23 +48,25 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        if (auth.isLoggedIn) {
-          return MultiProvider(
-            providers: [
-              ChangeNotifierProvider(
-                create: (_) => ClienteProvider(clientId: auth.user!.id),
-              ),
-            ],
-            child: auth.user!.role == UserRole.client
-                ? const ClienteShell()
-                : Scaffold(
-                    body: Center(
-                      child: Text('Role: ${auth.user!.role.name}'),
-                    ),
-                  ),
+        if (!auth.isLoggedIn) return const LoginScreen();
+
+        if (auth.user!.role == UserRole.client) {
+          return ChangeNotifierProvider(
+            create: (_) => ClienteProvider(clientId: auth.user!.id)..initRealtime(),
+            child: const ClienteShell(),
           );
         }
-        return const LoginScreen();
+
+        if (auth.user!.role == UserRole.restaurant) {
+          return ChangeNotifierProvider(
+            create: (_) => RestauranteProvider(userId: auth.user!.id)..init(),
+            child: const RestauranteShell(),
+          );
+        }
+
+        return Scaffold(
+          body: Center(child: Text('Role: ${auth.user!.role.name}')),
+        );
       },
     );
   }

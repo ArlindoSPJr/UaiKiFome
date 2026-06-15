@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../core/models/order.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/pill_badge.dart';
+import 'package:provider/provider.dart';
+import 'cliente_provider.dart';
 
 final _brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
@@ -35,10 +37,14 @@ class ClienteTrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shortId = order.id.length > 8
-        ? order.id.substring(0, 8).toUpperCase()
-        : order.id.toUpperCase();
-    final currentStep = _statusIndex(order.status);
+    final liveOrder = context.watch<ClienteProvider>().orders.firstWhere(
+          (o) => o.id == order.id,
+          orElse: () => order,
+        );
+    final shortId = liveOrder.id.length > 8
+        ? liveOrder.id.substring(0, 8).toUpperCase()
+        : liveOrder.id.toUpperCase();
+    final currentStep = _statusIndex(liveOrder.status);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +53,7 @@ class ClienteTrackingScreen extends StatelessWidget {
           children: [
             Text('Pedido #$shortId'),
             Text(
-              order.deliveryAddress,
+              liveOrder.deliveryAddress,
               style: const TextStyle(
                 fontSize: 11,
                 color: textMuted,
@@ -126,7 +132,7 @@ class ClienteTrackingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      order.status.label,
+                      liveOrder.status.label,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -137,8 +143,8 @@ class ClienteTrackingScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 PillBadge(
-                  label: order.status.label,
-                  color: _statusColor(order.status),
+                  label: liveOrder.status.label,
+                  color: _statusColor(liveOrder.status),
                 ),
               ],
             ),
@@ -183,7 +189,7 @@ class ClienteTrackingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          ...order.items.map(
+          ...liveOrder.items.map(
             (item) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -224,7 +230,7 @@ class ClienteTrackingScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                _brl.format(order.total),
+                _brl.format(liveOrder.total),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

@@ -13,6 +13,15 @@ export class RestaurantController {
     }
   }
 
+  async getMine(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const restaurant = await service.getMine(req.user!.id);
+      res.json(restaurant);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { name, description, address } = req.body;
@@ -57,6 +66,26 @@ export class RestaurantController {
         price,
       });
       res.status(201).json(item);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async toggleAvailability(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { available } = req.body;
+      if (typeof available !== "boolean") {
+        res.status(400).json({ error: "available deve ser um booleano" });
+        return;
+      }
+      const item = await service.toggleMenuItemAvailability({
+        userId: req.user!.id,
+        role: req.user!.role,
+        restaurantId: req.params.id,
+        menuItemId: req.params.itemId,
+        available,
+      });
+      res.json(item);
     } catch (err) {
       next(err);
     }

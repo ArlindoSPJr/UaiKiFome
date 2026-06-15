@@ -1,7 +1,13 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io' show Platform;
 
-const String _baseUrl = 'http://localhost:3000';
+String get _baseUrl {
+  if (kIsWeb) return 'http://localhost:3000';
+  if (Platform.isAndroid) return 'http://10.0.2.2:3000';
+  return 'http://localhost:3000';
+}
 
 Dio createDioClient() {
   final dio = Dio(BaseOptions(
