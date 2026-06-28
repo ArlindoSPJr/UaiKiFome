@@ -152,7 +152,7 @@ class _OrderCard extends StatelessWidget {
         ? order.id.substring(0, 8).toUpperCase()
         : order.id.toUpperCase();
     final itemsSummary = order.items
-        .map((i) => '${i.quantity}× ${i.menuItemName ?? i.menuItemId.substring(0, 6)}')
+        .map((i) => '${i.quantity}× ${i.menuItemName ?? 'Item'}')
         .join(' · ');
     final diff = DateTime.now().difference(order.createdAt);
     final timeAgo = diff.inMinutes < 1
@@ -187,6 +187,24 @@ class _OrderCard extends StatelessWidget {
               PillBadge(label: order.status.label, color: _statusColor(order.status)),
             ],
           ),
+          if (order.clientName != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.person_outline, size: 13, color: cafe),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    order.clientName!,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600, color: textDark),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 6),
           Text(
             order.deliveryAddress,

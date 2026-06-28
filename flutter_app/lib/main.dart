@@ -5,6 +5,8 @@ import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/cliente/cliente_provider.dart';
 import 'features/cliente/cliente_shell.dart';
+import 'features/entregador/entregador_provider.dart';
+import 'features/entregador/entregador_shell.dart';
 import 'features/restaurante/restaurante_provider.dart';
 import 'features/restaurante/restaurante_shell.dart';
 import 'shared/theme/app_theme.dart';
@@ -46,6 +48,13 @@ class UaiKiFomeApp extends StatelessWidget {
               );
             }
 
+            if (auth.isLoggedIn && auth.user!.role == UserRole.delivery) {
+              return ChangeNotifierProvider(
+                create: (_) => EntregadorProvider(userId: auth.user!.id)..init(),
+                child: child!,
+              );
+            }
+
             return child!;
           },
         );
@@ -79,6 +88,10 @@ class _AuthGateState extends State<AuthGate> {
 
         if (auth.user!.role == UserRole.restaurant) {
           return const RestauranteShell();
+        }
+
+        if (auth.user!.role == UserRole.delivery) {
+          return const EntregadorShell();
         }
 
         return Scaffold(

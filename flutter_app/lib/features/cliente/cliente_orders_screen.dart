@@ -106,8 +106,7 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itemsSummary = order.items
-        .map((i) =>
-            '${i.quantity}× ${i.menuItemName ?? i.menuItemId.substring(0, 6)}')
+        .map((i) => '${i.quantity}× ${i.menuItemName ?? 'Item'}')
         .join(' · ');
     final shortId = order.id.length > 8
         ? order.id.substring(0, 8).toUpperCase()
@@ -156,6 +155,24 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (order.restaurantName != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(Icons.storefront_outlined, size: 12, color: cafe),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      order.restaurantName!,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600, color: textDark),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 6),
             if (itemsSummary.isNotEmpty)
               Text(

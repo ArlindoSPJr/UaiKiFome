@@ -5,10 +5,11 @@ class OrderApi {
   final Dio _dio;
   OrderApi(this._dio);
 
-  Future<List<Order>> listOrders({String? clientId, String? restaurantId, String? status}) async {
+  Future<List<Order>> listOrders({String? clientId, String? restaurantId, String? deliveryPersonId, String? status}) async {
     final res = await _dio.get('/orders', queryParameters: {
       if (clientId != null) 'clientId': clientId,
       if (restaurantId != null) 'restaurantId': restaurantId,
+      if (deliveryPersonId != null) 'deliveryPersonId': deliveryPersonId,
       if (status != null) 'status': status,
     });
     return (res.data as List).map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();

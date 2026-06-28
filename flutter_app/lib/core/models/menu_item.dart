@@ -4,6 +4,7 @@ class MenuItem {
   final String name;
   final String? description;
   final double price;
+  final int quantity;
   final bool available;
 
   const MenuItem({
@@ -12,6 +13,7 @@ class MenuItem {
     required this.name,
     this.description,
     required this.price,
+    this.quantity = 0,
     required this.available,
   });
 
@@ -21,6 +23,7 @@ class MenuItem {
     name: json['name'] as String,
     description: json['description'] as String?,
     price: (json['price'] as num).toDouble(),
+    quantity: json['quantity'] as int? ?? 0,
     available: json['available'] as bool? ?? true,
   );
 }

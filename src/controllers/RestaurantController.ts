@@ -48,13 +48,17 @@ export class RestaurantController {
 
   async addMenuItem(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { name, description, price } = req.body;
+      const { name, description, price, quantity } = req.body;
       if (!name || price === undefined) {
         res.status(400).json({ error: "name e price são obrigatórios" });
         return;
       }
       if (typeof price !== "number" || price <= 0) {
         res.status(400).json({ error: "price deve ser um número maior que zero" });
+        return;
+      }
+      if (quantity !== undefined && (typeof quantity !== "number" || !Number.isInteger(quantity) || quantity < 0)) {
+        res.status(400).json({ error: "quantity deve ser um número inteiro maior ou igual a zero" });
         return;
       }
       const item = await service.addMenuItem({
@@ -64,6 +68,7 @@ export class RestaurantController {
         name,
         description,
         price,
+        quantity,
       });
       res.status(201).json(item);
     } catch (err) {

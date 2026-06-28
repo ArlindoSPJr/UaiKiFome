@@ -203,9 +203,7 @@ class ClienteTrackingScreen extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      item.menuItemName ??
-                          item.menuItemId.substring(
-                              0, item.menuItemId.length.clamp(0, 8)),
+                      item.menuItemName ?? 'Item',
                       style: const TextStyle(color: textDark),
                     ),
                   ),

@@ -28,6 +28,8 @@ class Order {
   final String clientId;
   final String restaurantId;
   final String? deliveryPersonId;
+  final String? clientName;
+  final String? restaurantName;
   final OrderStatus status;
   final double total;
   final String deliveryAddress;
@@ -40,6 +42,8 @@ class Order {
     required this.clientId,
     required this.restaurantId,
     this.deliveryPersonId,
+    this.clientName,
+    this.restaurantName,
     required this.status,
     required this.total,
     required this.deliveryAddress,
@@ -53,6 +57,8 @@ class Order {
     clientId: json['clientId'] as String,
     restaurantId: json['restaurantId'] as String,
     deliveryPersonId: json['deliveryPersonId'] as String?,
+    clientName: json['clientName'] as String?,
+    restaurantName: json['restaurantName'] as String?,
     status: OrderStatus.values.firstWhere((s) => s.name == json['status']),
     total: (json['total'] as num).toDouble(),
     deliveryAddress: json['deliveryAddress'] as String,
@@ -68,6 +74,8 @@ class Order {
     clientId: clientId,
     restaurantId: restaurantId,
     deliveryPersonId: deliveryPersonId,
+    clientName: clientName,
+    restaurantName: restaurantName,
     status: status ?? this.status,
     total: total,
     deliveryAddress: deliveryAddress,

@@ -8,7 +8,12 @@ interface JwtPayload {
   role: string;
 }
 
-const connectedUsers = new Map<string, WebSocket>();
+interface Connection {
+  ws: WebSocket;
+  role: string;
+}
+
+const connectedUsers = new Map<string, Connection>();
 
 export function initWsServer(server: HttpServer): void {
   const wss = new WebSocketServer({ server });
@@ -32,6 +37,7 @@ export function initWsServer(server: HttpServer): void {
     }
 
     let userId: string;
+    let role: string;
     try {
       const payload = jwt.verify(token, secret) as JwtPayload;
       const sub = (payload as any).sub as string | undefined;
@@ -40,12 +46,13 @@ export function initWsServer(server: HttpServer): void {
         return;
       }
       userId = sub;
+      role = payload.role;
     } catch {
       ws.close(1008, "Token inválido ou expirado");
       return;
     }
 
-    connectedUsers.set(userId, ws);
+    connectedUsers.set(userId, { ws, role });
 
     ws.on("close", () => {
       connectedUsers.delete(userId);
@@ -56,13 +63,27 @@ export function initWsServer(server: HttpServer): void {
 }
 
 export function notifyUser(userId: string, payload: object): void {
-  const ws = connectedUsers.get(userId);
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
+  const conn = connectedUsers.get(userId);
+  if (!conn || conn.ws.readyState !== WebSocket.OPEN) {
     return;
   }
   try {
-    ws.send(JSON.stringify(payload));
+    conn.ws.send(JSON.stringify(payload));
   } catch (err) {
     console.error(`[wsServer] Erro ao enviar mensagem para usuário ${userId}:`, err);
+  }
+}
+
+export function notifyRole(role: string, payload: object): void {
+  const message = JSON.stringify(payload);
+  for (const [userId, conn] of connectedUsers) {
+    if (conn.role !== role || conn.ws.readyState !== WebSocket.OPEN) {
+      continue;
+    }
+    try {
+      conn.ws.send(message);
+    } catch (err) {
+      console.error(`[wsServer] Erro ao enviar mensagem para usuário ${userId}:`, err);
+    }
   }
 }

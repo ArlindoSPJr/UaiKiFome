@@ -5,22 +5,24 @@ export const OrderRepository = AppDataSource.getRepository(Order).extend({
   findWithItems(id: string) {
     return this.findOne({
       where: { id },
-      relations: ["items", "items.menuItem"],
+      relations: ["items", "items.menuItem", "restaurant", "client"],
     });
   },
 
   findByFilters(filters: {
     restaurantId?: string;
     clientId?: string;
+    deliveryPersonId?: string;
     status?: OrderStatus;
   }) {
     return this.find({
       where: {
         ...(filters.restaurantId && { restaurantId: filters.restaurantId }),
         ...(filters.clientId && { clientId: filters.clientId }),
+        ...(filters.deliveryPersonId && { deliveryPersonId: filters.deliveryPersonId }),
         ...(filters.status && { status: filters.status }),
       },
-      relations: ["items"],
+      relations: ["items", "items.menuItem", "restaurant", "client"],
       order: { createdAt: "DESC" },
     });
   },

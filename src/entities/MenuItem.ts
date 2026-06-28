@@ -31,6 +31,9 @@ export class MenuItem {
   @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalTransformer })
   price!: number;
 
+  @Column({ type: "int", default: 0 })
+  quantity!: number;
+
   @Column({ default: true })
   available!: boolean;
 

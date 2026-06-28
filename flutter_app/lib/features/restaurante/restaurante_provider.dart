@@ -90,6 +90,7 @@ class RestauranteProvider extends ChangeNotifier {
     required String name,
     String? description,
     required double price,
+    required int quantity,
   }) async {
     if (myRestaurant == null) return false;
     try {
@@ -98,6 +99,7 @@ class RestauranteProvider extends ChangeNotifier {
         name: name,
         description: description,
         price: price,
+        quantity: quantity,
       );
       menuItems = [...menuItems, item];
       notifyListeners();

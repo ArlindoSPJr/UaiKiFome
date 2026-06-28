@@ -29,6 +29,7 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
     final nameCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
+    final quantityCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
@@ -72,7 +73,7 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
               TextFormField(
                 controller: priceCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                textInputAction: TextInputAction.done,
+                textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'Preço *',
                   prefixText: 'R\$ ',
@@ -84,18 +85,36 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: quantityCtrl,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade em estoque *',
+                  prefixIcon: Icon(Icons.inventory_2_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Informe a quantidade';
+                  final parsed = int.tryParse(v.trim());
+                  if (parsed == null || parsed < 0) return 'Quantidade inválida';
+                  return null;
+                },
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   if (!formKey.currentState!.validate()) return;
                   final price =
                       double.parse(priceCtrl.text.replaceAll(',', '.'));
+                  final quantity = int.parse(quantityCtrl.text.trim());
                   final ok = await provider.addMenuItem(
                     name: nameCtrl.text.trim(),
                     description: descCtrl.text.trim().isEmpty
                         ? null
                         : descCtrl.text.trim(),
                     price: price,
+                    quantity: quantity,
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (!ok && context.mounted) {
@@ -185,13 +204,34 @@ class _RestauranteMenuScreenState extends State<RestauranteMenuScreen> {
                                       ),
                                     ],
                                     const SizedBox(height: 4),
-                                    Text(
-                                      _brl.format(item.price),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: urucum,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _brl.format(item.price),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: urucum,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Icon(
+                                          Icons.inventory_2_outlined,
+                                          size: 13,
+                                          color: item.quantity > 0 ? couve : urucum,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          item.quantity > 0
+                                              ? '${item.quantity} em estoque'
+                                              : 'Sem estoque',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: item.quantity > 0 ? couve : urucum,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),

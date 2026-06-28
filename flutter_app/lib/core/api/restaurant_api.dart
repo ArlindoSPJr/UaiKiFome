@@ -40,11 +40,13 @@ class RestaurantApi {
     required String name,
     String? description,
     required double price,
+    required int quantity,
   }) async {
     final res = await _dio.post('/restaurants/$restaurantId/menu', data: {
       'name': name,
       if (description != null) 'description': description,
       'price': price,
+      'quantity': quantity,
     });
     return MenuItem.fromJson(res.data as Map<String, dynamic>);
   }

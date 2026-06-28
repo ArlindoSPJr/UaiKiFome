@@ -12,7 +12,7 @@ import {
   publishOrderInDelivery,
   publishOrderDelivered,
 } from "../events/publishers/OrderPublisher";
-import { notifyUser } from "../websocket/wsServer";
+import { notifyUser, notifyRole } from "../websocket/wsServer";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -27,8 +27,23 @@ interface CreateOrderDTO {
   items: OrderItemInput[];
 }
 
+// Achata as relações em nomes simples e remove objetos sensíveis (User.client
+// inclui o hash de senha) antes de enviar a resposta ao cliente.
+function toOrderResponse(order: Order) {
+  const { client, restaurant, deliveryPerson, ...rest } = order as Order & {
+    client?: { name?: string };
+    restaurant?: { name?: string };
+    deliveryPerson?: unknown;
+  };
+  return {
+    ...rest,
+    clientName: client?.name ?? null,
+    restaurantName: restaurant?.name ?? null,
+  };
+}
+
 export class OrderService {
-  async create(data: CreateOrderDTO): Promise<Order> {
+  async create(data: CreateOrderDTO): Promise<ReturnType<typeof toOrderResponse>> {
     if (data.role !== UserRole.CLIENT) {
       throw { status: 403, message: "Apenas usuários com role 'client' podem criar pedidos" };
     }
@@ -37,60 +52,76 @@ export class OrderService {
       throw { status: 400, message: "O pedido deve ter ao menos um item" };
     }
 
-    const menuItemRepo = AppDataSource.getRepository(MenuItem);
-    const orderItems: OrderItem[] = [];
-    let total = 0;
+    // Criação do pedido + baixa de estoque em uma única transação.
+    const saved = await AppDataSource.transaction(async (manager) => {
+      const menuItemRepo = manager.getRepository(MenuItem);
+      const orderRepo = manager.getRepository(Order);
+      const orderItems: OrderItem[] = [];
+      let total = 0;
 
-    for (const input of data.items) {
-      const menuItem = await menuItemRepo.findOne({
-        where: { id: input.menuItemId, restaurantId: data.restaurantId, available: true },
+      for (const input of data.items) {
+        if (input.quantity <= 0) {
+          throw { status: 400, message: "Quantidade deve ser maior que zero" };
+        }
+
+        const menuItem = await menuItemRepo.findOne({
+          where: { id: input.menuItemId, restaurantId: data.restaurantId, available: true },
+        });
+        if (!menuItem) {
+          throw { status: 400, message: `Item ${input.menuItemId} não encontrado ou indisponível` };
+        }
+        if (menuItem.quantity < input.quantity) {
+          throw { status: 400, message: `Estoque insuficiente para ${menuItem.name}` };
+        }
+
+        // Baixa automática de estoque; esgotado sai da vitrine.
+        menuItem.quantity -= input.quantity;
+        if (menuItem.quantity === 0) {
+          menuItem.available = false;
+        }
+        await menuItemRepo.save(menuItem);
+
+        const orderItem = new OrderItem();
+        orderItem.menuItemId = menuItem.id;
+        orderItem.quantity = input.quantity;
+        orderItem.unitPrice = Number(menuItem.price);
+        orderItems.push(orderItem);
+        total += orderItem.unitPrice * input.quantity;
+      }
+
+      const order = orderRepo.create({
+        clientId: data.clientId,
+        restaurantId: data.restaurantId,
+        deliveryAddress: data.deliveryAddress,
+        status: OrderStatus.CRIADO,
+        total: Math.round(total * 100) / 100,
+        items: orderItems,
       });
-      if (!menuItem) {
-        throw { status: 400, message: `Item ${input.menuItemId} não encontrado ou indisponível` };
-      }
-      if (input.quantity <= 0) {
-        throw { status: 400, message: "Quantidade deve ser maior que zero" };
-      }
 
-      const orderItem = new OrderItem();
-      orderItem.menuItemId = menuItem.id;
-      orderItem.quantity = input.quantity;
-      orderItem.unitPrice = Number(menuItem.price);
-      orderItems.push(orderItem);
-      total += orderItem.unitPrice * input.quantity;
-    }
-
-    const order = OrderRepository.create({
-      clientId: data.clientId,
-      restaurantId: data.restaurantId,
-      deliveryAddress: data.deliveryAddress,
-      status: OrderStatus.CRIADO,
-      total: Math.round(total * 100) / 100,
-      items: orderItems,
+      return orderRepo.save(order);
     });
-
-    const saved = await OrderRepository.save(order);
 
     publishOrderCreated(saved.id, saved.restaurantId, saved.clientId).catch((err) =>
       console.error("[publisher] Erro ao publicar order.created:", err)
     );
 
-    return saved;
+    return this.findById(saved.id);
   }
 
-  async findById(id: string): Promise<Order> {
+  async findById(id: string): Promise<ReturnType<typeof toOrderResponse>> {
     const order = await OrderRepository.findWithItems(id);
     if (!order) {
       throw { status: 404, message: "Pedido não encontrado" };
     }
-    return order;
+    return toOrderResponse(order);
   }
 
-  async list(filters: { restaurantId?: string; clientId?: string; status?: OrderStatus }): Promise<Order[]> {
-    return OrderRepository.findByFilters(filters);
+  async list(filters: { restaurantId?: string; clientId?: string; deliveryPersonId?: string; status?: OrderStatus }): Promise<ReturnType<typeof toOrderResponse>[]> {
+    const orders = await OrderRepository.findByFilters(filters);
+    return orders.map(toOrderResponse);
   }
 
-  async updateStatus(id: string, newStatus: OrderStatus, role: UserRole, deliveryPersonId?: string): Promise<Order> {
+  async updateStatus(id: string, newStatus: OrderStatus, role: UserRole, deliveryPersonId?: string): Promise<ReturnType<typeof toOrderResponse>> {
     const order = await OrderRepository.findOne({ where: { id } });
     if (!order) {
       throw { status: 404, message: "Pedido não encontrado" };
@@ -147,6 +178,17 @@ export class OrderService {
 
     notifyUser(saved.clientId, wsPayload);
 
+    // Pedido aceito pelo restaurante: avisa todos os entregadores conectados
+    // que há um novo pedido disponível para entrega.
+    if (newStatus === OrderStatus.ACEITO) {
+      notifyRole(UserRole.DELIVERY, wsPayload);
+    }
+
+    // Entregador designado recebe as atualizações do seu pedido.
+    if (saved.deliveryPersonId) {
+      notifyUser(saved.deliveryPersonId, wsPayload);
+    }
+
     RestaurantRepository.findOne({ where: { id: saved.restaurantId } })
       .then((restaurant) => {
         if (restaurant && restaurant.userId) {
@@ -157,6 +199,6 @@ export class OrderService {
         console.error(`[wsServer] Erro ao buscar restaurante para notificação WS (pedido ${saved.id}):`, err);
       });
 
-    return saved;
+    return this.findById(saved.id);
   }
 }

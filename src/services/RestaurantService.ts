@@ -11,6 +11,7 @@ interface CreateMenuItemDTO {
   name: string;
   description?: string;
   price: number;
+  quantity?: number;
 }
 
 interface CreateRestaurantDTO {
@@ -88,6 +89,7 @@ export class RestaurantService {
       name: data.name,
       description: data.description,
       price: data.price,
+      quantity: data.quantity ?? 0,
       available: true,
     });
     return menuItemRepo.save(item);

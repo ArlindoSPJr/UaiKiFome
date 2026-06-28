@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/models/user.dart';
 import '../../shared/theme/app_theme.dart';
 import 'auth_provider.dart';
 import 'signup_screen.dart';
@@ -17,19 +16,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
-  UserRole _selectedRole = UserRole.client;
-
-  static const _roleLabels = {
-    UserRole.client: 'Cliente',
-    UserRole.restaurant: 'Restaurante',
-    UserRole.delivery: 'Entregador',
-  };
-
-  static const _roleSubtitles = {
-    UserRole.client: 'Cê tá cum fome, né?',
-    UserRole.restaurant: 'Bora gerenciar seu restaurante!',
-    UserRole.delivery: 'Partiu fazer entrega!',
-  };
 
   @override
   void dispose() {
@@ -49,20 +35,8 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: urucum,
         ),
       );
-      return;
     }
-    if (auth.user!.role != _selectedRole) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Esta conta não é de um ${_roleLabels[_selectedRole]!.toLowerCase()}.',
-          ),
-          backgroundColor: urucum,
-        ),
-      );
-      await auth.logout();
-      if (!mounted) return;
-    }
+    // Em caso de sucesso, o AuthGate redireciona conforme o papel da conta.
   }
 
   @override
@@ -90,40 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _roleSubtitles[_selectedRole]!,
+                        'Bora matar a fome!',
                         textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
                             ?.copyWith(color: textMuted),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Role tabs
-                      SegmentedButton<UserRole>(
-                        segments: const [
-                          ButtonSegment(
-                            value: UserRole.client,
-                            label: Text('Cliente'),
-                            icon: Icon(Icons.person_outline),
-                          ),
-                          ButtonSegment(
-                            value: UserRole.restaurant,
-                            label: Text('Restaurante'),
-                            icon: Icon(Icons.restaurant_outlined),
-                          ),
-                          ButtonSegment(
-                            value: UserRole.delivery,
-                            label: Text('Entregador'),
-                            icon: Icon(Icons.delivery_dining_outlined),
-                          ),
-                        ],
-                        selected: {_selectedRole},
-                        onSelectionChanged: (set) =>
-                            setState(() => _selectedRole = set.first),
-                        style: ButtonStyle(
-                          iconSize: const WidgetStatePropertyAll(16),
-                        ),
                       ),
                       const SizedBox(height: 32),
 
