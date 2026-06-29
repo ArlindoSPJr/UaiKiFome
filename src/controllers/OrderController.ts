@@ -35,13 +35,26 @@ export class OrderController {
       // Cliente só vê os próprios pedidos: id vem do token, não da query.
       const effectiveClientId =
         req.user!.role === UserRole.CLIENT ? req.user!.id : (clientId as string | undefined);
+      // Entregador não vê os pedidos que já recusou.
+      const excludeRejectedBy =
+        req.user!.role === UserRole.DELIVERY ? req.user!.id : undefined;
       const orders = await service.list({
         restaurantId: restaurantId as string | undefined,
         clientId: effectiveClientId,
         deliveryPersonId: deliveryPersonId as string | undefined,
         status: status as OrderStatus | undefined,
+        excludeRejectedBy,
       });
       res.json(orders);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async reject(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await service.rejectOrder(req.params.id, req.user!.id, req.user!.role);
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

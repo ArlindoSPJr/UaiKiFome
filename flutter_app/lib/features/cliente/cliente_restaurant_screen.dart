@@ -142,6 +142,7 @@ class _MenuItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final outOfStock = item.quantity <= 0;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -182,35 +183,54 @@ class _MenuItemCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 6),
-                Text(
-                  _brl.format(item.price),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: urucum,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      _brl.format(item.price),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: urucum,
+                      ),
+                    ),
+                    if (outOfStock) ...[
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Esgotado',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () {
-              context.read<ClienteProvider>().addToCart(
-                    restaurantId,
-                    item.id,
-                    item.name,
-                    item.price,
-                  );
-            },
+            onPressed: outOfStock
+                ? null
+                : () {
+                    context.read<ClienteProvider>().addToCart(
+                          restaurantId,
+                          item.id,
+                          item.name,
+                          item.price,
+                        );
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: urucum,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: textMuted.withValues(alpha: 0.3),
+              disabledForegroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
-            child: const Text('Adicionar'),
+            child: Text(outOfStock ? 'Esgotado' : 'Adicionar'),
           ),
         ],
       ),

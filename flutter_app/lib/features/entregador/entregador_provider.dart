@@ -102,8 +102,7 @@ class EntregadorProvider extends ChangeNotifier {
   Future<bool> completeOrder(String orderId) async {
     try {
       final updated = await _orderApi.updateStatus(orderId, OrderStatus.ENTREGUE.name);
-      myOrders.removeWhere((o) => o.id == orderId);
-      completedOrders.insert(0, updated);
+      _markCompleted(updated);
       notifyListeners();
       return true;
     } catch (_) {
@@ -111,12 +110,28 @@ class EntregadorProvider extends ChangeNotifier {
     }
   }
 
-  /// Recusa local: o backend não tem estado de rejeição, então apenas escondemos
-  /// o pedido para este entregador.
-  void rejectOrder(String orderId) {
+  /// Move um pedido para a lista de concluídos de forma idempotente. Tanto a
+  /// resposta HTTP de [completeOrder] quanto o evento WebSocket podem disparar
+  /// isso para o mesmo pedido; o dedupe evita que ele apareça duas vezes.
+  void _markCompleted(Order order) {
+    myOrders.removeWhere((o) => o.id == order.id);
+    completedOrders.removeWhere((o) => o.id == order.id);
+    completedOrders.insert(0, order);
+  }
+
+  /// Recusa o pedido para este entregador. A rejeição é persistida no backend,
+  /// que passa a excluí-la das listagens de disponíveis deste entregador.
+  Future<void> rejectOrder(String orderId) async {
     rejectedIds.add(orderId);
     availableOrders.removeWhere((o) => o.id == orderId);
     notifyListeners();
+    try {
+      await _orderApi.rejectOrder(orderId);
+    } catch (_) {
+      // Falha ao persistir: reverte buscando a lista novamente.
+      rejectedIds.remove(orderId);
+      await fetchAvailableOrders();
+    }
   }
 
   Future<void> applyStatusEvent(String orderId, String rawStatus) async {
@@ -127,8 +142,8 @@ class EntregadorProvider extends ChangeNotifier {
     final mineIdx = myOrders.indexWhere((o) => o.id == orderId);
     if (mineIdx != -1) {
       if (status == OrderStatus.ENTREGUE) {
-        final done = myOrders.removeAt(mineIdx).copyWith(status: status, updatedAt: DateTime.now());
-        completedOrders.insert(0, done);
+        final done = myOrders[mineIdx].copyWith(status: status, updatedAt: DateTime.now());
+        _markCompleted(done);
       } else {
         myOrders[mineIdx] =
             myOrders[mineIdx].copyWith(status: status, updatedAt: DateTime.now());

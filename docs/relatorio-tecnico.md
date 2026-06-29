@@ -62,7 +62,7 @@ O sistema divide-se em três grandes blocos: o **backend** (API + barramento de 
                               PostgreSQL (TypeORM)
 ```
 
-**Tecnologias principais:** Node.js, Express, TypeScript, TypeORM, PostgreSQL, RabbitMQ , WebSocket, Flutter. A orquestração de infraestrutura (Postgres e RabbitMQ) é feita via Docker Compose.
+**Tecnologias principais:** Node.js, Express, TypeScript, TypeORM, PostgreSQL, RabbitMQ , WebSocket, Flutter. A orquestração é feita via Docker Compose: o `docker-compose.yml` sobe **três serviços** — o **backend** (API + WebSocket, porta `3000`), o **PostgreSQL** (porta `5433` no host) e o **RabbitMQ** (portas `5672` e `15672`). Assim, todo o lado servidor é levantado com um único `docker compose up -d --build`, sem necessidade de instalar Node.js ou configurar `.env` manualmente. A **única** parte que roda separadamente, via terminal, é o **aplicativo Flutter (frontend)**, que se conecta ao backend exposto em `http://localhost:3000`.
 
 A inicialização do backend (`src/server.ts`) segue uma ordem deliberada: (1) conectar ao banco (`AppDataSource.initialize`), (2) iniciar os consumidores de mensagens (`startConsumers`), e só então (3) subir o servidor HTTP e anexar o servidor WebSocket (`initWsServer`). Essa sequência garante que nenhuma requisição seja atendida antes de o sistema estar apto a produzir e consumir eventos.
 
@@ -178,7 +178,7 @@ O roteiro de demonstração exercita exatamente os padrões descritos. Cada pass
 
 ## 9. Dificuldades encontradas e soluções adotadas
 
-1. **Ordem de inicialização e disponibilidade do broker** — em Docker, a aplicação podia subir antes do RabbitMQ. *Solução:* retry com backoff na conexão e uma sequência de boot explícita (banco → consumidores → HTTP/WS).
+1. **Ordem de inicialização e disponibilidade do broker** — com o backend também conteinerizado, o serviço podia subir antes de o Postgres e o RabbitMQ estarem prontos. *Solução:* no `docker-compose.yml`, o serviço `backend` declara `depends_on` com `condition: service_healthy` para ambos (cada um com seu `healthcheck`), aguardando-os ficarem saudáveis; complementarmente, a aplicação faz retry com backoff na conexão e segue uma sequência de boot explícita (banco → consumidores → HTTP/WS).
 2. **Consistência estoque × pedido** — risco de baixar estoque sem criar o pedido (ou vice-versa). *Solução:* transação única envolvendo ambas as operações.
 
 ---

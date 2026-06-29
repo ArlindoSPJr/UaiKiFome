@@ -37,4 +37,8 @@ class OrderApi {
     final res = await _dio.patch('/orders/$orderId/status', data: {'status': status});
     return Order.fromJson(res.data as Map<String, dynamic>);
   }
+
+  Future<void> rejectOrder(String orderId) async {
+    await _dio.post('/orders/$orderId/reject');
+  }
 }

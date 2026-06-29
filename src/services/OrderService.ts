@@ -4,6 +4,7 @@ import { MenuItem } from "../entities/MenuItem";
 import { OrderItem } from "../entities/OrderItem";
 import { UserRole } from "../entities/User";
 import { OrderRepository } from "../repositories/OrderRepository";
+import { OrderRejectionRepository } from "../repositories/OrderRejectionRepository";
 import { RestaurantRepository } from "../repositories/RestaurantRepository";
 import {
   publishOrderCreated,
@@ -74,11 +75,10 @@ export class OrderService {
           throw { status: 400, message: `Estoque insuficiente para ${menuItem.name}` };
         }
 
-        // Baixa automática de estoque; esgotado sai da vitrine.
+        // Baixa automática de estoque. O item permanece no cardápio mesmo
+        // esgotado (quantity = 0); a disponibilidade é controlada apenas pelo
+        // toggle manual do restaurante.
         menuItem.quantity -= input.quantity;
-        if (menuItem.quantity === 0) {
-          menuItem.available = false;
-        }
         await menuItemRepo.save(menuItem);
 
         const orderItem = new OrderItem();
@@ -116,9 +116,33 @@ export class OrderService {
     return toOrderResponse(order);
   }
 
-  async list(filters: { restaurantId?: string; clientId?: string; deliveryPersonId?: string; status?: OrderStatus }): Promise<ReturnType<typeof toOrderResponse>[]> {
-    const orders = await OrderRepository.findByFilters(filters);
+  async list(filters: { restaurantId?: string; clientId?: string; deliveryPersonId?: string; status?: OrderStatus; excludeRejectedBy?: string }): Promise<ReturnType<typeof toOrderResponse>[]> {
+    const { excludeRejectedBy, ...rest } = filters;
+    let excludeIds: string[] | undefined;
+    if (excludeRejectedBy) {
+      excludeIds = await OrderRejectionRepository.findOrderIdsByDeliveryPerson(excludeRejectedBy);
+    }
+    const orders = await OrderRepository.findByFilters({ ...rest, excludeIds });
     return orders.map(toOrderResponse);
+  }
+
+  // Entregador recusa um pedido: registra a rejeição (por entregador) para que
+  // ele não volte a aparecer na lista de disponíveis desse entregador.
+  async rejectOrder(orderId: string, deliveryPersonId: string, role: UserRole): Promise<void> {
+    if (role !== UserRole.DELIVERY) {
+      throw { status: 403, message: "Apenas usuários com role 'delivery' podem recusar pedidos" };
+    }
+
+    const order = await OrderRepository.findOne({ where: { id: orderId } });
+    if (!order) {
+      throw { status: 404, message: "Pedido não encontrado" };
+    }
+
+    const existing = await OrderRejectionRepository.findOne({ where: { orderId, deliveryPersonId } });
+    if (existing) return; // idempotente: já recusado
+
+    const rejection = OrderRejectionRepository.create({ orderId, deliveryPersonId });
+    await OrderRejectionRepository.save(rejection);
   }
 
   async updateStatus(id: string, newStatus: OrderStatus, role: UserRole, deliveryPersonId?: string): Promise<ReturnType<typeof toOrderResponse>> {
