@@ -1,20 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 String get _wsBaseUrl {
   if (kIsWeb) return 'ws://localhost:3000';
-  if (Platform.isAndroid) return 'ws://10.0.2.2:3000';
+  if (defaultTargetPlatform == TargetPlatform.android) return 'ws://10.0.2.2:3000';
   return 'ws://localhost:3000';
 }
 
 class OrderSocketService {
   void Function(String orderId, String status)? onStatus;
 
-  IOWebSocketChannel? _channel;
+  WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   bool _disposed = false;
 
@@ -26,7 +25,7 @@ class OrderSocketService {
 
     try {
       final channel =
-          IOWebSocketChannel.connect(Uri.parse('$_wsBaseUrl?token=$token'));
+          WebSocketChannel.connect(Uri.parse('$_wsBaseUrl?token=$token'));
       _channel = channel;
       _sub = channel.stream.listen(
         _onMessage,

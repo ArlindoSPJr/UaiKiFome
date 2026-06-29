@@ -141,6 +141,13 @@ class _SignupScreenState extends State<SignupScreen> {
           title: 'Tenho restaurante',
           subtitle: 'Cadastre seu restaurante e receba pedidos',
         ),
+        const SizedBox(height: 16),
+        _buildRoleCard(
+          role: 'delivery',
+          icon: Icons.delivery_dining,
+          title: 'Quero entregar',
+          subtitle: 'Aceite pedidos e faça entregas',
+        ),
         const SizedBox(height: 32),
         SizedBox(
           height: 50,

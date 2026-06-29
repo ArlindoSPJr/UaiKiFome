@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io' show Platform;
 
 String get _baseUrl {
   if (kIsWeb) return 'http://localhost:3000';
-  if (Platform.isAndroid) return 'http://10.0.2.2:3000';
+  if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000';
   return 'http://localhost:3000';
 }
 
